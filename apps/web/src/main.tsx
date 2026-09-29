@@ -2,12 +2,14 @@ import { useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
 
-const API = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
+const API = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:4000" : "");
 function App() {
   const [message, setMessage] = useState("Ready for a report.");
   const [sending, setSending] = useState(false);
   async function sendSOS(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault(); setSending(true);
+    event.preventDefault();
+    if (!API) { setMessage("The live emergency service is being connected. For an emergency, contact local emergency services."); return; }
+    setSending(true);
     const form = new FormData(event.currentTarget);
     navigator.geolocation.getCurrentPosition(async ({ coords }) => {
       const response = await fetch(`${API}/api/incidents`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ type: form.get("type"), severity: "high", description: form.get("description"), latitude: coords.latitude, longitude: coords.longitude, language: navigator.language }) });
